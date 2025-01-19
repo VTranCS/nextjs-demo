@@ -24,10 +24,23 @@ export function UpdateInvoice({ id }: { id: string }) {
   );
 }
 
-export function DeleteInvoice({ id }: { id: string }) {
-  const deleteInvoiceWithId = deleteInvoice.bind(null, id);
+export async function deleteInvoiceWithFormData(formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) {
+    console.error("No ID provided for deletion.");
+    return;
+  }
+
+  try {
+    await deleteInvoice(id);
+  } catch (error) {
+    console.error("Failed to delete invoice:", error);
+  }
+}
+
+export function DeleteInvoice() {
   return (
-    <form action={deleteInvoiceWithId}>
+    <form action={deleteInvoiceWithFormData}>
       <button className="rounded-md border p-2 hover:bg-gray-100">
         <span className="sr-only">Delete</span>
         <TrashIcon className="w-5" />

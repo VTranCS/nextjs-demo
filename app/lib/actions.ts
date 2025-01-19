@@ -26,7 +26,7 @@ export type State = {
     message?: string | null;
 };
 export async function createInvoice(prevState: State, formData: FormData) {
-    console.log("formDATA", formData);
+
     const validatedFields = CreateInvoice.safeParse({
         customerId: formData.get('customerId'),
         amount: formData.get('amount'),
@@ -57,30 +57,38 @@ export async function createInvoice(prevState: State, formData: FormData) {
     redirect('/dashboard/invoices');
 }
 const UpdateInvoice = FormSchema.omit({ id: true, date: true })
-export async function updateInvoice(id: string, formData: FormData) {
-    const { customerId, amount, status } = UpdateInvoice.parse({
+export async function updateInvoice(id: string,
+    prevState: State,
+    formData: FormData,
+) {
+    const validatedFields = UpdateInvoice.safeParse({
         customerId: formData.get('customerId'),
         amount: formData.get('amount'),
         status: formData.get('status'),
     });
 
-    const amountInCents = amount * 100;
-    try {
-        await sql`
-            UPDATE invoices
-            SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-            WHERE id = ${id}
-        `;
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Missing Fields. Failed to Update Invoice.',
+        };
     }
 
-    catch (error) {
+    const { customerId, amount, status } = validatedFields.data;
+    const amountInCents = amount * 100;
+
+    try {
+        await sql`
+        UPDATE invoices
+        SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+        WHERE id = ${id}`;
+    } catch (error) {
         console.log(error);
-        return {
-            message: 'Database Error: Failed to update Invoice'
-        }
+        return { message: 'Database Error: Failed to Update Invoice.' };
     }
-    revalidatePath('/dashboard/invoices')
-    redirect('/dashboard/invoices')
+
+    revalidatePath('/dashboard/invoices');
+    redirect('/dashboard/invoices');
 }
 
 export async function deleteInvoice(id: string) {
