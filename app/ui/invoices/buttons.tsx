@@ -25,6 +25,7 @@ export function UpdateInvoice({ id }: { id: string }) {
 }
 
 export async function deleteInvoiceWithFormData(formData: FormData) {
+  "use server";
   const id = formData.get('id') as string;
   if (!id) {
     console.error("No ID provided for deletion.");
